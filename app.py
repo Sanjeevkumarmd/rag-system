@@ -77,6 +77,7 @@ html,body,* { font-family:var(--sans)!important; box-sizing:border-box; font-siz
 }
 #MainMenu,footer,header { visibility:hidden; }
 [data-testid="stSidebarNav"] { display:none!important; }
+.hidden-draft-box { display: none !important; }
 
 /* Sidebar */
 [data-testid="stSidebar"] {
@@ -809,13 +810,14 @@ for msg in st.session_state.chat_history:
 # ─── Main-page UPLOAD zone (sit at the bottom, merged near input) ──────────────
 if not using_docs:
     st.markdown('<div style="max-width:1100px;margin:12px auto 0 auto;padding:0 5px;">', unsafe_allow_html=True)
-    uploads = st.file_uploader(
-        "Drop .txt or .pdf files here to ask about them",
-        type=["txt", "pdf"],
-        accept_multiple_files=True,
-        label_visibility="collapsed",
-        key="main_uploader",
-    )
+    with st.expander("📤 Attach Documents / Drop Files here (RAG Mode Auto-Identify)", expanded=False):
+        uploads = st.file_uploader(
+            "Drop .txt or .pdf files here to ask about them",
+            type=["txt", "pdf"],
+            accept_multiple_files=True,
+            label_visibility="collapsed",
+            key="main_uploader",
+        )
     st.markdown('</div>', unsafe_allow_html=True)
 
     if uploads:
@@ -900,6 +902,7 @@ if show_suggestion_chips:
 
 # ─── Autocomplete suggestion bar ─────────────────────────────────────────────
 # We use a thin text_input to get real-time draft, then show matching keywords
+st.markdown('<div class="hidden-draft-box">', unsafe_allow_html=True)
 draft = st.text_input(
     "draft_hidden",
     value=st.session_state.get("draft", ""),
@@ -907,6 +910,7 @@ draft = st.text_input(
     key="draft_input",
     label_visibility="collapsed",
 )
+st.markdown('</div>', unsafe_allow_html=True)
 st.session_state.draft = draft
 
 # Show keyword suggestions if doc loaded and draft has content
