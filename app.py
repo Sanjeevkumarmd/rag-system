@@ -121,19 +121,19 @@ html,body,* { font-family:var(--sans)!important; box-sizing:border-box; font-siz
 }
 
 /* User bubbles (right side) */
-div[data-chat-message-role="user"] {
+div[data-testid="stChatMessage"]:has(.user-marker) {
   flex-direction: row-reverse !important;
 }
-div[data-chat-message-role="user"] [data-testid="stChatMessageContent"] {
-  background: linear-gradient(135deg, rgba(99,102,241,0.14), rgba(139,92,246,0.14)) !important;
-  border: 1px solid rgba(139,92,246,0.25) !important;
+div[data-testid="stChatMessage"]:has(.user-marker) [data-testid="stChatMessageContent"] {
+  background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.18)) !important;
+  border: 1px solid rgba(139,92,246,0.3) !important;
   border-radius: 16px 16px 4px 16px !important;
   text-align: left !important;
   margin-left: auto !important;
 }
 
 /* Assistant bubbles (left side) */
-div[data-chat-message-role="assistant"] [data-testid="stChatMessageContent"] {
+div[data-testid="stChatMessage"]:has(.assistant-marker) [data-testid="stChatMessageContent"] {
   background: var(--glass)!important;
   border: 1px solid var(--glass-b)!important;
   border-radius: 16px 16px 16px 4px !important;
@@ -147,6 +147,9 @@ div[data-chat-message-role="assistant"] [data-testid="stChatMessageContent"] {
   line-height:1.65!important;
   backdrop-filter:blur(10px)!important;
   max-width: 80% !important;
+  background: var(--glass) !important;
+  border: 1px solid var(--glass-b) !important;
+  border-radius: 16px !important;
 }
 
 /* Actions Menu on Hover */
