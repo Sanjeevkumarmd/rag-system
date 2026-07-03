@@ -188,6 +188,9 @@ pre { background:rgba(0,0,0,.4)!important; border:1px solid var(--glass-b)!impor
 [data-testid="stFileUploader"] p {
   display: none !important;
 }
+[data-testid="stFileUploaderDropzoneInstructions"] {
+  display: none !important;
+}
 [data-testid="stFileUploader"] div[data-testid="stFileUploaderDropzone"] > div {
   display: none !important;
 }
