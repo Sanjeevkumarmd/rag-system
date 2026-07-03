@@ -31,7 +31,7 @@ COOLDOWN_SECS  = COOLDOWN_HOURS * 3600
 
 # ─── Page config ─────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="NexusAI — AI Knowledge Assistant",
+    page_title="RAGAI — AI Knowledge Assistant",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -210,15 +210,15 @@ div[data-testid="stChatMessage"]:has(.assistant-marker) [data-testid="stChatMess
   background: transparent !important;
   border-top: none !important;
   padding: 10px 0 !important;
-  max-width: 860px !important;
+  max-width: 1100px !important;
   margin: 0 auto !important;
 }
 [data-testid="stChatInput"] > div {
-  max-width: 860px !important;
+  max-width: 1100px !important;
   margin: 0 auto !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 20px !important;
-  background: rgba(13, 16, 32, 0.88) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 12px !important;
+  background: rgba(13, 16, 32, 0.3) !important;
   backdrop-filter: blur(20px) !important;
   transition: border-color 0.25s, box-shadow 0.25s !important;
   animation: borderGlow 4s infinite alternate;
@@ -235,9 +235,9 @@ div[data-testid="stChatMessage"]:has(.assistant-marker) [data-testid="stChatMess
 }
 
 @keyframes borderGlow {
-  0% { border-color: rgba(99, 102, 241, 0.2); box-shadow: 0 0 8px rgba(99, 102, 241, 0.05); }
-  50% { border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 0 20px rgba(139, 92, 246, 0.18); }
-  100% { border-color: rgba(99, 102, 241, 0.2); box-shadow: 0 0 8px rgba(99, 102, 241, 0.05); }
+  0% { border-color: rgba(99, 102, 241, 0.15); box-shadow: 0 0 8px rgba(99, 102, 241, 0.03); }
+  50% { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 0 15px rgba(139, 92, 246, 0.12); }
+  100% { border-color: rgba(99, 102, 241, 0.15); box-shadow: 0 0 8px rgba(99, 102, 241, 0.03); }
 }
 
 /* Redesigned Glassmorphic Buttons */
@@ -501,7 +501,7 @@ def _fmt(secs):
     secs = max(0, int(secs))
     h, r = divmod(secs, 3600)
     m, s = divmod(r, 60)
-    return f"{h}h {m:02d}m" if h else f"{m}m {s:02d}s"
+    return f"{h}h {m:02d}m {s:02d}s" if h else f"{m}m {s:02d}s"
 
 
 # ─── Pipeline (cached) ────────────────────────────────────────────────────────
@@ -519,7 +519,7 @@ with st.sidebar:
       <div style="font-size:22px;font-weight:900;
                   background:linear-gradient(135deg,#a5b4fc,#c4b5fd);
                   -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-        ⚡ NexusAI
+        ⚡ RAGAI
       </div>
       <div style="font-size:12px;color:#475569;">AI Knowledge Assistant</div>
     </div>""", unsafe_allow_html=True)
@@ -532,7 +532,16 @@ with st.sidebar:
         st.markdown(f'<span class="mode-pill pill-cd">🕐 Cooldown — {_fmt(rem_c)}</span>',
                     unsafe_allow_html=True)
 
-    st.caption(f"Session ID: `{st.session_state.session_id}`")
+    # Session ID Copy highlight
+    st.markdown(f"""
+    <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);
+                border-radius:8px;padding:8px 12px;margin-bottom:8px;display:flex;align-items:center;">
+      <span style="font-size:12px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ID: <strong style="color:#a5b4fc;font-family:monospace;">{st.session_state.session_id}</strong>
+      </span>
+      <button class="chat-action-btn" style="margin-left:auto;font-size:12px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.05);" onclick="navigator.clipboard.writeText('{st.session_state.session_id}'); this.innerText='✓'; setTimeout(()=>this.innerText='Copy', 1500)">Copy</button>
+    </div>
+    """, unsafe_allow_html=True)
     st.caption("Bookmark this URL to return to your conversation.")
 
     st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:14px 0'>",
@@ -578,14 +587,19 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("**🤖 Conversation Style**")
-    ai_mode_choice = st.radio(
-        "AI Mode",
-        options=["💼 Professional", "⚡ Gen Z / Alpha"],
-        index=0,
-        label_visibility="collapsed",
-        key="ai_mode_radio"
-    )
-    st.session_state.ai_mode = "genz" if "Gen Z" in ai_mode_choice else "professional"
+    style_col1, style_col2 = st.columns(2)
+    with style_col1:
+        is_prof = st.session_state.get("ai_mode", "professional") == "professional"
+        prof_btn_style = "🟢 Professional" if is_prof else "💼 Professional"
+        if st.button(prof_btn_style, key="sidebar_prof_btn", use_container_width=True):
+            st.session_state.ai_mode = "professional"
+            st.rerun()
+    with style_col2:
+        is_genz = st.session_state.get("ai_mode", "professional") == "genz"
+        genz_btn_style = "🟢 Gen Z / Alpha" if is_genz else "⚡ Gen Z / Alpha"
+        if st.button(genz_btn_style, key="sidebar_genz_btn", use_container_width=True):
+            st.session_state.ai_mode = "genz"
+            st.rerun()
 
     st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:14px 0'>",
                 unsafe_allow_html=True)
@@ -647,7 +661,61 @@ if status == "cooldown":
     st.stop()
 
 
-# ─── Hero ──────────────────────────────────────────────────────────────────────
+# ─── Top Middle Screen Header (RAGAI) & Timer ───────────────────────────────
+timer_col = "#22c55e" if pct > 0.4 else ("#f59e0b" if pct > 0.15 else "#f43f5e")
+target_secs = int(rem_a if status == "active" else rem_c)
+
+st.markdown(f"""
+<div style="text-align:center;margin-top:-15px;margin-bottom:12px;animation:fadeUp .5s ease;">
+  <div style="font-size:36px;font-weight:900;letter-spacing:0.08em;
+              background:linear-gradient(135deg,#c4b5fd 0%,#a5b4fc 50%,#818cf8 100%);
+              -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+              text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
+              text-shadow: 0 0 25px rgba(99, 102, 241, 0.15);">
+    ⚡ RAGAI
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Client-side countdown container with progress bar below
+components.html(f"""
+<div style="text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;font-size:13.5px;color:#a5b4fc;font-weight:600;margin-bottom:6px;">
+  ⏱ <span id="countdown-text">Calculating...</span>
+</div>
+<div style="width:300px;height:4px;background:rgba(255,255,255,.05);border-radius:10px;margin:0 auto 0 auto;overflow:hidden;">
+  <div id="countdown-bar" style="width:100%;height:100%;background:{timer_col};border-radius:10px;transition:width 1s linear;"></div>
+</div>
+<script>
+  let secondsLeft = {target_secs};
+  const totalDuration = {SESSION_SECS if status == "active" else COOLDOWN_SECS};
+  const textEl = document.getElementById("countdown-text");
+  const barEl = document.getElementById("countdown-bar");
+  
+  function refreshTimer() {{
+    if (secondsLeft <= 0) {{
+      window.parent.location.reload();
+      return;
+    }}
+    let h = Math.floor(secondsLeft / 3600);
+    let rem = secondsLeft % 3600;
+    let m = Math.floor(rem / 60);
+    let s = rem % 60;
+    let display = "";
+    if (h > 0) {{
+      display = h + "h " + (m < 10 ? "0" : "") + m + "m " + (s < 10 ? "0" : "") + s + "s";
+    }} else {{
+      display = m + "m " + (s < 10 ? "0" : "") + s + "s";
+    }}
+    textEl.innerText = ("{ "Active" if status == "active" else "Cooldown" }") + " Session: " + display;
+    let percentage = (secondsLeft / totalDuration) * 100;
+    barEl.style.width = percentage + "%";
+    secondsLeft--;
+  }
+  refreshTimer();
+  setInterval(refreshTimer, 1000);
+</script>
+""", height=42)
+
 using_docs = st.session_state.user_index is not None
 api_key_ok = bool(os.environ.get("GROQ_API_KEY"))
 
@@ -658,143 +726,35 @@ style_label = "⚡ Gen Z / Alpha Style" if st.session_state.ai_mode == "genz" el
 style_class = "pill-general"           if st.session_state.ai_mode == "genz" else "pill-rag"
 
 st.markdown(f"""
-<div class="nexus-hero">
-  <div class="nexus-badge">
-    <span class="nexus-badge-dot"></span>
-    SECURE · PRIVATE · MULTI-DOMAIN
-  </div>
-  <div class="nexus-title">NexusAI</div>
-  <div class="nexus-sub">
-    Ask anything — from any file, any topic, any domain.<br>
-    Your private AI knowledge assistant.
-  </div>
-  <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px">
-    <span class="mode-pill {mode_class}">{mode_label}</span>
-    <span class="mode-pill {style_class}">{style_label}</span>
-  </div>
+<div style="display:flex;justify-content:center;gap:8px;margin-top:12px;margin-bottom:12px;">
+  <span class="mode-pill {mode_class}">{mode_label}</span>
+  <span class="mode-pill {style_class}">{style_label}</span>
 </div>
-<div class="nexus-divider"></div>""", unsafe_allow_html=True)
+<div class="nexus-divider" style="margin-top:10px;margin-bottom:15px;"></div>""", unsafe_allow_html=True)
 
-# Mode Switcher on main page
-tcol1, tcol2, tcol3 = st.columns([1.5, 2, 1.5])
+# Switchable buttons for Conversation style on main page
+tcol1, tcol2 = st.columns(2)
+with tcol1:
+    is_prof = st.session_state.get("ai_mode", "professional") == "professional"
+    prof_label = "🟢 Professional Style" if is_prof else "💼 Switch to Professional"
+    if st.button(prof_label, key="main_prof_btn", use_container_width=True):
+        st.session_state.ai_mode = "professional"
+        st.rerun()
 with tcol2:
-    mode_btn_label = "💼 Switch to Professional Style" if st.session_state.ai_mode == "genz" else "⚡ Switch to Gen Z Style"
-    if st.button(mode_btn_label, key="mode_switch_main_btn", use_container_width=True):
-        st.session_state.ai_mode = "professional" if st.session_state.ai_mode == "genz" else "genz"
-        # Synchronize radio button by changing index
+    is_genz = st.session_state.get("ai_mode", "professional") == "genz"
+    genz_label = "🟢 Gen Z / Alpha Style" if is_genz else "⚡ Switch to Gen Z Style"
+    if st.button(genz_label, key="main_genz_btn", use_container_width=True):
+        st.session_state.ai_mode = "genz"
         st.rerun()
 
 
-# ─── Main-page UPLOAD zone ─────────────────────────────────────────────────────
-if not using_docs:
-    st.markdown("""
-    <div style="margin-bottom:8px">
-      <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;
-                  color:#475569;font-weight:600;margin-bottom:10px;">
-        📤 UPLOAD A DOCUMENT <span style="color:#334155">(optional — or just ask anything below)</span>
-      </div>
-    </div>""", unsafe_allow_html=True)
-
-    uploads = st.file_uploader(
-        "Drop .txt or .pdf files here",
-        type=["txt", "pdf"],
-        accept_multiple_files=True,
-        label_visibility="collapsed",
-        key="main_uploader",
-    )
-
-    if uploads:
-        docs, full_texts = [], []
-        size_limit_exceeded = False
-        for f in uploads:
-            # Check size limit: 500MB
-            if f.size > 500 * 1024 * 1024:
-                st.toast(f"⚠️ File '{f.name}' exceeds the 500MB limit!", icon="❌")
-                size_limit_exceeded = True
-                continue
-            text = ingest.extract_text_from_bytes(f.getvalue(), f.name)
-            if text.strip():
-                docs.append({"text": text, "source": f.name})
-                full_texts.append(text)
-
-        if docs:
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("📚 Use these documents", use_container_width=True):
-                    with st.spinner("Indexing documents…"):
-                        idx, chunks, meta = ingest.build_index_from_docs(docs, pipeline.embedder)
-                    if idx:
-                        st.session_state.user_index     = idx
-                        st.session_state.user_chunks    = chunks
-                        st.session_state.user_metadata  = meta
-                        st.session_state.user_filenames = [f.name for f in uploads]
-                        combined = "\n\n".join(full_texts)
-                        st.session_state.doc_full_text  = combined
-                        st.session_state.show_chips     = True
-
-                        # Extract key points + keywords in parallel
-                        with st.spinner("✨ Analysing key points…"):
-                            if api_key_ok:
-                                st.session_state.key_points   = extract_key_points(combined)
-                                st.session_state.doc_keywords = extract_doc_keywords(combined)
-                            else:
-                                st.session_state.key_points   = []
-                                st.session_state.doc_keywords = []
-                        st.rerun()
-                    else:
-                        st.error("No usable text found in those files.")
-            with col2:
-                st.markdown(
-                    f'<div style="padding:8px 0;font-size:13px;color:#64748b">'
-                    f'📎 {len(uploads)} file(s) selected</div>',
-                    unsafe_allow_html=True,
-                )
-else:
-    # Document uploaded — show success banner
-    fnames = ", ".join(st.session_state.user_filenames)
-    st.markdown(f"""
-    <div class="upload-success">
-      <div class="upload-check">✓</div>
-      <div>
-        <div class="upload-filename">📎 {fnames}</div>
-        <div class="upload-meta">Document indexed · NexusAI is answering from your file</div>
-      </div>
-    </div>""", unsafe_allow_html=True)
-
-
-# ─── Key-point suggestion chips ────────────────────────────────────────────────
-# Show only when: docs uploaded + chips flag set + no chat yet (or early in chat)
+# ─── Returning user notice ─────────────────────────────────────────────────────
 show_suggestion_chips = (
     st.session_state.show_chips
     and st.session_state.key_points
     and len(st.session_state.chat_history) < 6
 )
 
-if show_suggestion_chips:
-    delays = [".1s", ".2s", ".3s", ".4s", ".5s"]
-    chips_html = "".join(
-        f'<div class="chip" style="animation-delay:{delays[i]}">'
-        f'<span style="font-size:14px">💡</span> {pt}'
-        f'</div>'
-        for i, pt in enumerate(st.session_state.key_points)
-    )
-    st.markdown(f"""
-    <div class="suggestions-wrap">
-      <div class="suggestions-label">✨ Key points — click to ask</div>
-      <div class="chip-grid">{chips_html}</div>
-    </div>""", unsafe_allow_html=True)
-
-    # Invisible buttons matching each chip (Streamlit needs buttons for click handling)
-    cols = st.columns(len(st.session_state.key_points))
-    for i, (col, pt) in enumerate(zip(cols, st.session_state.key_points)):
-        with col:
-            if st.button(pt, key=f"kp_{i}", help="Click to ask this",
-                         use_container_width=True):
-                st.session_state.pending_msg = pt
-                st.session_state.show_chips  = False   # fade chips after first click
-
-
-# ─── Returning user notice ─────────────────────────────────────────────────────
 if st.session_state.get("returning") and st.session_state.chat_history:
     st.markdown("""
     <div class="tip-box">
@@ -803,9 +763,9 @@ if st.session_state.get("returning") and st.session_state.chat_history:
     st.session_state.returning = False
 elif not st.session_state.chat_history and not show_suggestion_chips:
     st.markdown("""
-    <div class="tip-box">
-      <strong>⚡ Ask anything.</strong> No upload needed — NexusAI answers from broad AI
-      knowledge across every domain. Or upload a PDF/text file above for document Q&A.
+    <div class="tip-box" style="text-align:center;">
+      <strong>⚡ Ask anything.</strong> No upload needed — RAGAI answers from broad AI knowledge.
+      Or drop files at the bottom for unified document Q&A.
     </div>""", unsafe_allow_html=True)
 
 
@@ -824,7 +784,7 @@ for msg in st.session_state.chat_history:
     <div class="chat-actions">
       <span>{timestamp}</span>
       <span style="margin: 0 2px;">·</span>
-      <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{safe_content}'))">Copy</button>
+      <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{safe_content}')); this.innerText='Copied ✓'; setTimeout(()=>this.innerText='Copy', 2000)">Copy</button>
     </div>
     """
     
@@ -844,7 +804,99 @@ for msg in st.session_state.chat_history:
                     </div>""", unsafe_allow_html=True)
 
 
-# ─── Autocomplete suggestion bar (keyword matching as user types) ─────────────
+# ─── Main-page UPLOAD zone (sit at the bottom, merged near input) ──────────────
+if not using_docs:
+    st.markdown('<div style="max-width:1100px;margin:12px auto 0 auto;padding:0 5px;">', unsafe_allow_html=True)
+    uploads = st.file_uploader(
+        "Drop .txt or .pdf files here to ask about them",
+        type=["txt", "pdf"],
+        accept_multiple_files=True,
+        label_visibility="collapsed",
+        key="main_uploader",
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if uploads:
+        docs, full_texts = [], []
+        size_limit_exceeded = False
+        for f in uploads:
+            if f.size > 500 * 1024 * 1024:
+                st.toast(f"⚠️ File '{f.name}' exceeds the 500MB limit!", icon="❌")
+                size_limit_exceeded = True
+                continue
+            text = ingest.extract_text_from_bytes(f.getvalue(), f.name)
+            if text.strip():
+                docs.append({"text": text, "source": f.name})
+                full_texts.append(text)
+
+        if docs:
+            ucol1, ucol2 = st.columns([1.5, 1])
+            with ucol1:
+                if st.button("📚 Index files & Ask RAGAI", key="index_files_bottom_btn", use_container_width=True):
+                    with st.spinner("Indexing documents…"):
+                        idx, chunks, meta = ingest.build_index_from_docs(docs, pipeline.embedder)
+                    if idx:
+                        st.session_state.user_index     = idx
+                        st.session_state.user_chunks    = chunks
+                        st.session_state.user_metadata  = meta
+                        st.session_state.user_filenames = [f.name for f in uploads]
+                        combined = "\n\n".join(full_texts)
+                        st.session_state.doc_full_text  = combined
+                        st.session_state.show_chips     = True
+                        with st.spinner("✨ Analyzing key points…"):
+                            if api_key_ok:
+                                st.session_state.key_points   = extract_key_points(combined)
+                                st.session_state.doc_keywords = extract_doc_keywords(combined)
+                            else:
+                                st.session_state.key_points   = []
+                                st.session_state.doc_keywords = []
+                        st.rerun()
+            with ucol2:
+                st.markdown(
+                    f'<div style="padding:8px 0;font-size:12.5px;color:#64748b;text-align:right;">'
+                    f'📎 {len(uploads)} file(s) selected</div>',
+                    unsafe_allow_html=True,
+                )
+else:
+    fnames = ", ".join(st.session_state.user_filenames)
+    st.markdown(f"""
+    <div class="upload-success" style="max-width:1100px;margin: 12px auto 6px auto;padding: 10px 16px;">
+      <div class="upload-check" style="width:20px;height:20px;font-size:11px;">✓</div>
+      <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+        <div>
+          <span class="upload-filename" style="font-size:13px;">📎 {fnames}</span>
+          <span class="upload-meta" style="font-size:11px;margin-left:8px;color:#64748b;">(Auto RAG Mode Active)</span>
+        </div>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+
+# ─── Key-point suggestion chips (rendered below history) ──────────────────────
+if show_suggestion_chips:
+    delays = [".1s", ".2s", ".3s", ".4s", ".5s"]
+    chips_html = "".join(
+        f'<div class="chip" style="animation-delay:{delays[i]}">'
+        f'<span style="font-size:14px">💡</span> {pt}'
+        f'</div>'
+        for i, pt in enumerate(st.session_state.key_points)
+    )
+    st.markdown(f"""
+    <div class="suggestions-wrap" style="max-width:1100px;margin: 8px auto;">
+      <div class="suggestions-label">✨ Key points — click to ask</div>
+      <div class="chip-grid">{chips_html}</div>
+    </div>""", unsafe_allow_html=True)
+
+    cols = st.columns(len(st.session_state.key_points))
+    for i, (col, pt) in enumerate(zip(cols, st.session_state.key_points)):
+        with col:
+            if st.button(pt, key=f"kp_{i}", help="Click to ask this",
+                         use_container_width=True):
+                st.session_state.pending_msg = pt
+                st.session_state.show_chips  = False
+                st.rerun()
+
+
+# ─── Autocomplete suggestion bar ─────────────────────────────────────────────
 # We use a thin text_input to get real-time draft, then show matching keywords
 draft = st.text_input(
     "draft_hidden",
@@ -924,7 +976,7 @@ if user_input:
             f"""<div class="chat-actions">
               <span>{now_time}</span>
               <span style="margin: 0 2px;">·</span>
-              <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(user_input)}'))">Copy</button>
+              <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(user_input)}')); this.innerText='Copied ✓'; setTimeout(()=>this.innerText='Copy', 2000)">Copy</button>
             </div>""",
             unsafe_allow_html=True
         )
@@ -963,7 +1015,7 @@ if user_input:
                         f"""<div class="chat-actions">
                           <span>{now_time}</span>
                           <span style="margin: 0 2px;">·</span>
-                          <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(full_response)}'))">Copy</button>
+                          <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(full_response)}')); this.innerText='Copied ✓'; setTimeout(()=>this.innerText='Copy', 2000)">Copy</button>
                         </div>""", unsafe_allow_html=True)
         else:
             if using_docs:
@@ -986,7 +1038,7 @@ if user_input:
                         f"""<div class="chat-actions">
                           <span>{now_time}</span>
                           <span style="margin: 0 2px;">·</span>
-                          <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(full_response)}'))">Copy</button>
+                          <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(full_response)}')); this.innerText='Copied ✓'; setTimeout(()=>this.innerText='Copy', 2000)">Copy</button>
                         </div>""", unsafe_allow_html=True)
 
         if sources:
@@ -1020,5 +1072,5 @@ st.markdown("""
 <div style="text-align:center;margin-top:48px;padding-top:20px;
             border-top:1px solid rgba(255,255,255,.06);
             font-size:12.5px;color:#334155">
-  Secure AI Knowledge Assistant
+  RAGAI · Secure AI Knowledge Assistant
 </div>""", unsafe_allow_html=True)
