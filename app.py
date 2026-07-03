@@ -87,32 +87,27 @@ html,body,* { font-family:var(--sans)!important; box-sizing:border-box; font-siz
 [data-testid="stSidebar"] small,
 [data-testid="stSidebar"] .stMarkdown p { color:var(--dim)!important; font-size:12px!important; }
 
-/* Sidebar Toggle Customization (2 lines hamburger) */
-[data-testid="collapsedControl"] button,
+/* Sidebar Toggle Customization (highly visible, glowing) */
+[data-testid="collapsedControl"] {
+  background: rgba(13, 16, 32, 0.95) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+  left: 20px !important;
+  top: 20px !important;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.2) !important;
+}
+[data-testid="collapsedControl"] button {
+  color: var(--text) !important;
+}
+[data-testid="collapsedControl"] svg {
+  fill: var(--text) !important;
+}
 [data-testid="stSidebar"] button[aria-label="Close sidebar"] {
   background: rgba(255,255,255,0.02) !important;
   border: 1px solid var(--glass-b) !important;
   border-radius: 8px !important;
-  width: 32px !important;
-  height: 32px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-[data-testid="collapsedControl"] button svg,
-[data-testid="stSidebar"] button[aria-label="Close sidebar"] svg {
-  display: none !important;
-}
-[data-testid="collapsedControl"] button::before,
-[data-testid="stSidebar"] button[aria-label="Close sidebar"]::before {
-  content: "";
-  display: block;
-  width: 14px;
-  height: 2px;
-  background: var(--text) !important;
-  box-shadow: 0 4px 0 var(--text) !important;
-  margin-top: -3px;
-  transition: all 0.2s;
+  color: var(--text) !important;
 }
 
 /* Chat bubble aligning & animations */
@@ -207,29 +202,39 @@ div[data-chat-message-role="assistant"] [data-testid="stChatMessageContent"] {
   color: #c4b5fd !important;
 }
 
-/* Chat input */
+/* Chat input container styling */
 [data-testid="stChatInput"] {
-  background: rgba(7, 9, 15, 0.96) !important;
-  border-top: 1px solid var(--glass-b) !important;
-  padding: 14px 0px !important;
+  background: transparent !important;
+  border-top: none !important;
+  padding: 10px 0 !important;
+  max-width: 860px !important;
+  margin: 0 auto !important;
 }
 [data-testid="stChatInput"] > div {
   max-width: 860px !important;
   margin: 0 auto !important;
-  border: 1px solid var(--glass-b) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
   border-radius: 20px !important;
-  background: rgba(255,255,255,0.03) !important;
+  background: rgba(13, 16, 32, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
   transition: border-color 0.25s, box-shadow 0.25s !important;
+  animation: borderGlow 4s infinite alternate;
 }
 [data-testid="stChatInput"] > div:focus-within {
   border-color: var(--indigo) !important;
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.12) !important;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25) !important;
 }
 [data-testid="stChatInput"] textarea {
   background: transparent !important;
   border: none !important;
   color: var(--text) !important;
   font-size: 13.5px !important;
+}
+
+@keyframes borderGlow {
+  0% { border-color: rgba(99, 102, 241, 0.2); box-shadow: 0 0 8px rgba(99, 102, 241, 0.05); }
+  50% { border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 0 20px rgba(139, 92, 246, 0.18); }
+  100% { border-color: rgba(99, 102, 241, 0.2); box-shadow: 0 0 8px rgba(99, 102, 241, 0.05); }
 }
 
 /* Redesigned Glassmorphic Buttons */
@@ -660,12 +665,21 @@ st.markdown(f"""
     Ask anything — from any file, any topic, any domain.<br>
     Your private AI knowledge assistant.
   </div>
-  <div style="display:flex;justify-content:center;gap:8px">
+  <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px">
     <span class="mode-pill {mode_class}">{mode_label}</span>
     <span class="mode-pill {style_class}">{style_label}</span>
   </div>
 </div>
 <div class="nexus-divider"></div>""", unsafe_allow_html=True)
+
+# Mode Switcher on main page
+tcol1, tcol2, tcol3 = st.columns([1.5, 2, 1.5])
+with tcol2:
+    mode_btn_label = "💼 Switch to Professional Style" if st.session_state.ai_mode == "genz" else "⚡ Switch to Gen Z Style"
+    if st.button(mode_btn_label, key="mode_switch_main_btn", use_container_width=True):
+        st.session_state.ai_mode = "professional" if st.session_state.ai_mode == "genz" else "genz"
+        # Synchronize radio button by changing index
+        st.rerun()
 
 
 # ─── Main-page UPLOAD zone ─────────────────────────────────────────────────────
@@ -883,9 +897,14 @@ if st.session_state.pending_msg and not user_input:
 
 
 # ─── Process message ───────────────────────────────────────────────────────────
-# ─── Process message ───────────────────────────────────────────────────────────
+# ─── Typewriter & Image Helper ────────────────────────────────────────────────
+def typewriter_generator(stream):
+    for chunk in stream:
+        for char in chunk:
+            yield char
+            time.sleep(0.003)
+
 if user_input:
-    # Hide suggestion chips after first message
     st.session_state.show_chips = False
     now_time = datetime.now().strftime("%I:%M %p")
 
@@ -896,7 +915,6 @@ if user_input:
         "timestamp": now_time
     })
     
-    # We display the user message with user-marker and actions html
     with st.chat_message("user", avatar="🧑"):
         st.markdown(
             user_input + '<div class="user-marker"></div>' +
@@ -914,30 +932,60 @@ if user_input:
         for m in st.session_state.chat_history[:-1]
     ]
 
-    # Stream AI response
     sources = []
     mode = st.session_state.get("ai_mode", "professional")
     
+    # Check if request is an image generation request
+    image_keywords = ["generate image", "draw", "create image", "paint", "show me a picture of"]
+    is_image_request = any(user_input.lower().startswith(x) for x in image_keywords)
+    
     with st.chat_message("assistant", avatar="⚡"):
-        if using_docs:
-            # RAG mode — retrieve then stream
-            retrieved = pipeline.retrieve(
-                user_input,
-                index=st.session_state.user_index,
-                chunks=st.session_state.user_chunks,
-                metadata=st.session_state.user_metadata,
-            )
-            sources = retrieved
-            full_response = st.write_stream(
-                pipeline.stream_rag_answer(user_input, retrieved, history_for_llm, ai_mode=mode)
-            )
+        if is_image_request:
+            img_prompt = user_input
+            for x in ["generate image of", "generate image", "draw a picture of", "draw", "create image of", "create image", "paint", "show me a picture of"]:
+                if img_prompt.lower().startswith(x):
+                    img_prompt = img_prompt[len(x):].strip()
+                    break
+            
+            # URL encode prompt
+            encoded_prompt = urllib.parse.quote(img_prompt)
+            image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=768&height=768&nologo=true&seed={int(time.time())}"
+            
+            text_desc = f"🎨 Here is the image I generated for: **{img_prompt}**"
+            st.write_stream(typewriter_generator([text_desc]))
+            st.image(image_url, use_column_width=True)
+            
+            full_response = f"🎨 Here is the image I generated for: **{img_prompt}**\n\n![Generated Image]({image_url})"
+            st.markdown('<div class="assistant-marker"></div>' +
+                        f"""<div class="chat-actions">
+                          <span>{now_time}</span>
+                          <span style="margin: 0 2px;">·</span>
+                          <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(full_response)}'))">Copy</button>
+                        </div>""", unsafe_allow_html=True)
         else:
-            # General AI mode — stream directly
-            full_response = st.write_stream(
-                pipeline.stream_general_answer(user_input, history_for_llm, ai_mode=mode)
-            )
+            if using_docs:
+                retrieved = pipeline.retrieve(
+                    user_input,
+                    index=st.session_state.user_index,
+                    chunks=st.session_state.user_chunks,
+                    metadata=st.session_state.user_metadata,
+                )
+                sources = retrieved
+                full_response = st.write_stream(
+                    typewriter_generator(pipeline.stream_rag_answer(user_input, retrieved, history_for_llm, ai_mode=mode))
+                )
+            else:
+                full_response = st.write_stream(
+                    typewriter_generator(pipeline.stream_general_answer(user_input, history_for_llm, ai_mode=mode))
+                )
+                
+            st.markdown('<div class="assistant-marker"></div>' +
+                        f"""<div class="chat-actions">
+                          <span>{now_time}</span>
+                          <span style="margin: 0 2px;">·</span>
+                          <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(full_response)}'))">Copy</button>
+                        </div>""", unsafe_allow_html=True)
 
-        # Show source highlights for RAG mode
         if sources:
             with st.expander("📎 Source highlights — click to inspect", expanded=False):
                 for src in sources:
