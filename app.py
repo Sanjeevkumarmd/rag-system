@@ -474,6 +474,7 @@ def _init():
         st.session_state.show_chips     = False
         st.session_state.pending_msg    = ""
         st.session_state.draft          = ""
+        st.session_state.ai_mode        = "professional"
 
     st.query_params["sid"] = st.session_state.session_id
 
