@@ -125,23 +125,24 @@ html,body,* { font-family:var(--sans)!important; box-sizing:border-box; font-siz
   margin-bottom: 12px !important;
 }
 
-/* Shift User messages to right */
-div[data-testid="stChatMessage"]:has(.user-marker) {
+/* User bubbles (right side) */
+div[data-chat-message-role="user"] {
   flex-direction: row-reverse !important;
-  text-align: right !important;
 }
-div[data-testid="stChatMessage"]:has(.user-marker) [data-testid="stChatMessageContent"] {
-  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15)) !important;
+div[data-chat-message-role="user"] [data-testid="stChatMessageContent"] {
+  background: linear-gradient(135deg, rgba(99,102,241,0.14), rgba(139,92,246,0.14)) !important;
   border: 1px solid rgba(139,92,246,0.25) !important;
   border-radius: 16px 16px 4px 16px !important;
   text-align: left !important;
+  margin-left: auto !important;
 }
 
-/* Shift Assistant messages to left */
-div[data-testid="stChatMessage"]:has(.assistant-marker) [data-testid="stChatMessageContent"] {
+/* Assistant bubbles (left side) */
+div[data-chat-message-role="assistant"] [data-testid="stChatMessageContent"] {
   background: var(--glass)!important;
   border: 1px solid var(--glass-b)!important;
   border-radius: 16px 16px 16px 4px !important;
+  margin-right: auto !important;
 }
 
 [data-testid="stChatMessageContent"] {
@@ -231,18 +232,26 @@ div[data-testid="stChatMessage"]:has(.assistant-marker) [data-testid="stChatMess
   font-size: 13.5px !important;
 }
 
-/* Buttons */
+/* Redesigned Glassmorphic Buttons */
 .stButton>button {
-  background:linear-gradient(135deg,var(--indigo),var(--violet))!important;
-  color:#fff!important; border:none!important;
-  border-radius:10px!important; font-weight:600!important;
-  transition:transform .15s,box-shadow .15s!important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--glass-b) !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
 }
 .stButton>button:hover {
-  transform:translateY(-2px)!important;
-  box-shadow:0 8px 26px rgba(99,102,241,.45)!important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  border-color: var(--indigo) !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15) !important;
+  transform: translateY(-1px) !important;
 }
-.stButton>button:active { transform:translateY(0)!important; }
+.stButton>button:active {
+  transform: translateY(0) scale(0.97) !important;
+}
 
 /* Progress */
 .stProgress>div>div {
@@ -259,6 +268,25 @@ pre { background:rgba(0,0,0,.4)!important; border:1px solid var(--glass-b)!impor
   background:var(--glass)!important;
   border:1px solid var(--glass-b)!important;
   border-radius:14px!important;
+}
+[data-testid="stExpander"] summary {
+  padding: 10px 14px !important;
+}
+[data-testid="stExpander"] summary svg,
+[data-testid="stExpander"] summary span[data-testid="stExpanderIcon"],
+[data-testid="stExpander"] summary svg[class*="chevron"] {
+  display: none !important;
+}
+[data-testid="stExpander"] summary::after {
+  content: " ▾";
+  color: var(--indigo);
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+[data-testid="stExpander"] summary[aria-expanded="true"]::after {
+  content: " ▴";
 }
 
 /* File uploader */
