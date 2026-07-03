@@ -678,6 +678,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Client-side countdown container with progress bar below
+prefix_label = "Active" if status == "active" else "Cooldown"
 components.html(f"""
 <div style="text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;font-size:13.5px;color:#a5b4fc;font-weight:600;margin-bottom:6px;">
   ⏱ <span id="countdown-text">Calculating...</span>
@@ -706,7 +707,7 @@ components.html(f"""
     }} else {{
       display = m + "m " + (s < 10 ? "0" : "") + s + "s";
     }}
-    textEl.innerText = ("{ "Active" if status == "active" else "Cooldown" }") + " Session: " + display;
+    textEl.innerText = "{prefix_label} Session: " + display;
     let percentage = (secondsLeft / totalDuration) * 100;
     barEl.style.width = percentage + "%";
     secondsLeft--;
