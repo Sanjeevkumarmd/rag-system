@@ -78,6 +78,7 @@ html,body,* { font-family:var(--sans)!important; box-sizing:border-box; font-siz
 #MainMenu,footer,header { visibility:hidden; }
 [data-testid="stSidebarNav"] { display:none!important; }
 .hidden-draft-box { display: none !important; }
+.st-key-draft_input { display: none !important; }
 
 /* Sidebar */
 [data-testid="stSidebar"] {
@@ -215,6 +216,7 @@ div[data-testid="stChatMessage"]:has(.assistant-marker) [data-testid="stChatMess
   margin: 0 auto !important;
 }
 [data-testid="stChatInput"] > div {
+  width: 100% !important;
   max-width: 1100px !important;
   margin: 0 auto !important;
   border: 1px solid rgba(255,255,255,0.06) !important;
