@@ -43,15 +43,13 @@ from rag import RAGPipeline, extract_key_points, extract_doc_keywords, highlight
 from memory import new_session_id, save_session, load_session, session_exists
 
 # ─── CSS ─────────────────────────────────────────────────────────────────────
-st.markdown(r"""
-<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
   --bg:        #07090f;
   --bg2:       #0d1020;
-  --glass:     rgba(255,255,255,0.035);
-  --glass-b:   rgba(255,255,255,0.09);
+  --glass:     rgba(255,255,255,0.03);
+  --glass-b:   rgba(255,255,255,0.07);
   --indigo:    #6366f1;
   --violet:    #8b5cf6;
   --green:     #22c55e;
@@ -59,9 +57,9 @@ st.markdown(r"""
   --red:       #f43f5e;
   --text:      #e2e8f0;
   --dim:       #64748b;
-  --sans:      'Inter', system-ui, sans-serif;
+  --sans:      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-html,body,* { font-family:var(--sans)!important; box-sizing:border-box; }
+html,body,* { font-family:var(--sans)!important; box-sizing:border-box; font-size:13.5px !important; }
 
 /* App background */
 .stApp {
@@ -85,24 +83,102 @@ html,body,* { font-family:var(--sans)!important; box-sizing:border-box; }
 }
 [data-testid="stSidebar"] * { color:var(--text)!important; }
 [data-testid="stSidebar"] small,
-[data-testid="stSidebar"] .stMarkdown p { color:var(--dim)!important; font-size:12.5px!important; }
+[data-testid="stSidebar"] .stMarkdown p { color:var(--dim)!important; font-size:12px!important; }
 
-/* Chat messages */
+/* Sidebar Toggle Customization (2 lines hamburger) */
+[data-testid="collapsedControl"] button,
+[data-testid="stSidebar"] button[aria-label="Close sidebar"] {
+  background: rgba(255,255,255,0.02) !important;
+  border: 1px solid var(--glass-b) !important;
+  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+[data-testid="collapsedControl"] button svg,
+[data-testid="stSidebar"] button[aria-label="Close sidebar"] svg {
+  display: none !important;
+}
+[data-testid="collapsedControl"] button::before,
+[data-testid="stSidebar"] button[aria-label="Close sidebar"]::before {
+  content: "";
+  display: block;
+  width: 14px;
+  height: 2px;
+  background: var(--text) !important;
+  box-shadow: 0 4px 0 var(--text) !important;
+  margin-top: -3px;
+  transition: all 0.2s;
+}
+
+/* Chat bubble aligning & animations */
 [data-testid="stChatMessage"] {
   background:transparent!important;
   border:none!important;
   animation:fadeUp .35s ease both;
+  display: flex !important;
+  width: 100% !important;
+  margin-bottom: 12px !important;
 }
+
+/* Shift User messages to right */
+div[data-testid="stChatMessage"]:has(.user-marker) {
+  flex-direction: row-reverse !important;
+  text-align: right !important;
+}
+div[data-testid="stChatMessage"]:has(.user-marker) [data-testid="stChatMessageContent"] {
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15)) !important;
+  border: 1px solid rgba(139,92,246,0.25) !important;
+  border-radius: 16px 16px 4px 16px !important;
+  text-align: left !important;
+}
+
+/* Shift Assistant messages to left */
+div[data-testid="stChatMessage"]:has(.assistant-marker) [data-testid="stChatMessageContent"] {
+  background: var(--glass)!important;
+  border: 1px solid var(--glass-b)!important;
+  border-radius: 16px 16px 16px 4px !important;
+}
+
 [data-testid="stChatMessageContent"] {
-  background:var(--glass)!important;
-  border:1px solid var(--glass-b)!important;
-  border-radius:16px!important;
-  padding:18px 22px!important;
+  position: relative !important;
+  padding: 12px 18px !important;
   color:var(--text)!important;
-  font-size:15px!important;
-  line-height:1.78!important;
+  line-height:1.65!important;
   backdrop-filter:blur(10px)!important;
+  max-width: 80% !important;
 }
+
+/* Actions Menu on Hover */
+.chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 11px !important;
+  color: var(--dim);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  justify-content: flex-end;
+}
+[data-testid="stChatMessageContent"]:hover .chat-actions {
+  opacity: 1;
+}
+.chat-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--indigo);
+  cursor: pointer;
+  padding: 0;
+  font-size: 11px !important;
+  font-weight: 600;
+}
+.chat-action-btn:hover {
+  color: var(--violet);
+}
+
 /* Bold inside chat = highlighted */
 [data-testid="stChatMessageContent"] strong {
   color:#c4b5fd!important;
@@ -115,24 +191,42 @@ html,body,* { font-family:var(--sans)!important; box-sizing:border-box; }
   padding:2px 6px;
 }
 
+/* Custom keywords for click highlights */
+.chat-keyword {
+  color: #a5b4fc !important;
+  border-bottom: 1.5px dashed rgba(99,102,241,0.4);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.chat-keyword:hover {
+  background: rgba(99,102,241,0.15) !important;
+  color: #c4b5fd !important;
+}
+
 /* Chat input */
 [data-testid="stChatInput"] {
-  background:rgba(10,13,28,.92)!important;
-  border-top:1px solid var(--glass-b)!important;
-  padding:10px 14px!important;
-  backdrop-filter:blur(20px)!important;
+  background: rgba(7, 9, 15, 0.96) !important;
+  border-top: 1px solid var(--glass-b) !important;
+  padding: 14px 0px !important;
+}
+[data-testid="stChatInput"] > div {
+  max-width: 860px !important;
+  margin: 0 auto !important;
+  border: 1px solid var(--glass-b) !important;
+  border-radius: 20px !important;
+  background: rgba(255,255,255,0.03) !important;
+  transition: border-color 0.25s, box-shadow 0.25s !important;
+}
+[data-testid="stChatInput"] > div:focus-within {
+  border-color: var(--indigo) !important;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.12) !important;
 }
 [data-testid="stChatInput"] textarea {
-  background:rgba(255,255,255,.04)!important;
-  border:1px solid var(--glass-b)!important;
-  border-radius:14px!important;
-  color:var(--text)!important;
-  font-size:15px!important;
-  caret-color:var(--indigo)!important;
-}
-[data-testid="stChatInput"] textarea:focus {
-  border-color:var(--indigo)!important;
-  box-shadow:0 0 0 3px rgba(99,102,241,.18)!important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text) !important;
+  font-size: 13.5px !important;
 }
 
 /* Buttons */
@@ -445,6 +539,16 @@ with st.sidebar:
         save_session(st.session_state.session_id, [])
         st.rerun()
 
+    st.markdown("**🤖 Conversation Style**")
+    ai_mode_choice = st.radio(
+        "AI Mode",
+        options=["💼 Professional", "⚡ Gen Z / Alpha"],
+        index=0,
+        label_visibility="collapsed",
+        key="ai_mode_radio"
+    )
+    st.session_state.ai_mode = "genz" if "Gen Z" in ai_mode_choice else "professional"
+
     st.markdown("<hr style='border-color:rgba(255,255,255,.07);margin:14px 0'>",
                 unsafe_allow_html=True)
     st.markdown("""
@@ -512,6 +616,9 @@ api_key_ok = bool(os.environ.get("GROQ_API_KEY"))
 mode_label = "📄 Document Mode" if using_docs else "🌐 General AI Mode"
 mode_class = "pill-rag"        if using_docs else "pill-general"
 
+style_label = "⚡ Gen Z / Alpha Style" if st.session_state.ai_mode == "genz" else "💼 Professional Style"
+style_class = "pill-general"           if st.session_state.ai_mode == "genz" else "pill-rag"
+
 st.markdown(f"""
 <div class="nexus-hero">
   <div class="nexus-badge">
@@ -523,7 +630,10 @@ st.markdown(f"""
     Ask anything — from any file, any topic, any domain.<br>
     Your private AI knowledge assistant.
   </div>
-  <span class="mode-pill {mode_class}">{mode_label}</span>
+  <div style="display:flex;justify-content:center;gap:8px">
+    <span class="mode-pill {mode_class}">{mode_label}</span>
+    <span class="mode-pill {style_class}">{style_label}</span>
+  </div>
 </div>
 <div class="nexus-divider"></div>""", unsafe_allow_html=True)
 
@@ -653,9 +763,26 @@ elif not st.session_state.chat_history and not show_suggestion_chips:
 
 
 # ─── Chat history display ─────────────────────────────────────────────────────
+import urllib.parse
+from datetime import datetime
+
 for msg in st.session_state.chat_history:
-    with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "⚡"):
-        st.markdown(msg["content"])
+    role = msg["role"]
+    avatar = "🧑" if role == "user" else "⚡"
+    marker = '<div class="user-marker"></div>' if role == "user" else '<div class="assistant-marker"></div>'
+    timestamp = msg.get("timestamp", datetime.now().strftime("%I:%M %p"))
+    safe_content = urllib.parse.quote(msg["content"])
+    
+    actions_html = f"""
+    <div class="chat-actions">
+      <span>{timestamp}</span>
+      <span style="margin: 0 2px;">·</span>
+      <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{safe_content}'))">Copy</button>
+    </div>
+    """
+    
+    with st.chat_message(role, avatar=avatar):
+        st.markdown(msg["content"] + marker + actions_html, unsafe_allow_html=True)
         if msg.get("sources"):
             with st.expander("📎 Source highlights — click to inspect", expanded=False):
                 for src in msg["sources"]:
@@ -726,14 +853,30 @@ if st.session_state.pending_msg and not user_input:
 
 
 # ─── Process message ───────────────────────────────────────────────────────────
+# ─── Process message ───────────────────────────────────────────────────────────
 if user_input:
     # Hide suggestion chips after first message
     st.session_state.show_chips = False
+    now_time = datetime.now().strftime("%I:%M %p")
 
     # Append user message
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
+    st.session_state.chat_history.append({
+        "role": "user",
+        "content": user_input,
+        "timestamp": now_time
+    })
+    
+    # We display the user message with user-marker and actions html
     with st.chat_message("user", avatar="🧑"):
-        st.markdown(user_input)
+        st.markdown(
+            user_input + '<div class="user-marker"></div>' +
+            f"""<div class="chat-actions">
+              <span>{now_time}</span>
+              <span style="margin: 0 2px;">·</span>
+              <button class="chat-action-btn" onclick="navigator.clipboard.writeText(decodeURIComponent('{urllib.parse.quote(user_input)}'))">Copy</button>
+            </div>""",
+            unsafe_allow_html=True
+        )
 
     # Build history for LLM (exclude current message)
     history_for_llm = [
@@ -743,6 +886,8 @@ if user_input:
 
     # Stream AI response
     sources = []
+    mode = st.session_state.get("ai_mode", "professional")
+    
     with st.chat_message("assistant", avatar="⚡"):
         if using_docs:
             # RAG mode — retrieve then stream
@@ -754,12 +899,12 @@ if user_input:
             )
             sources = retrieved
             full_response = st.write_stream(
-                pipeline.stream_rag_answer(user_input, retrieved, history_for_llm)
+                pipeline.stream_rag_answer(user_input, retrieved, history_for_llm, ai_mode=mode)
             )
         else:
             # General AI mode — stream directly
             full_response = st.write_stream(
-                pipeline.stream_general_answer(user_input, history_for_llm)
+                pipeline.stream_general_answer(user_input, history_for_llm, ai_mode=mode)
             )
 
         # Show source highlights for RAG mode
@@ -778,10 +923,11 @@ if user_input:
 
     # Append assistant message to history
     st.session_state.chat_history.append({
-        "role":    "assistant",
-        "content": full_response,
-        "sources": sources,
-        "query":   user_input,
+        "role":      "assistant",
+        "content":   full_response,
+        "sources":   sources,
+        "query":     user_input,
+        "timestamp": datetime.now().strftime("%I:%M %p")
     })
 
     # Persist
