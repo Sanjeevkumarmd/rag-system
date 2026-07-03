@@ -43,6 +43,8 @@ from rag import RAGPipeline, extract_key_points, extract_doc_keywords, highlight
 from memory import new_session_id, save_session, load_session, session_exists
 
 # ─── CSS ─────────────────────────────────────────────────────────────────────
+st.markdown(r"""
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
