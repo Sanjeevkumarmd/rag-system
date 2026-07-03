@@ -711,7 +711,7 @@ components.html(f"""
     let percentage = (secondsLeft / totalDuration) * 100;
     barEl.style.width = percentage + "%";
     secondsLeft--;
-  }
+  }}
   refreshTimer();
   setInterval(refreshTimer, 1000);
 </script>
