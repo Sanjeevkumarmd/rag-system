@@ -24,17 +24,23 @@ def save_session(session_id: str, history: list) -> None:
     """Persist the chat history list for the given session ID."""
     _ensure_dir()
     path = MEMORY_DIR / f"{session_id}.json"
-    path.write_text(
-        json.dumps(
+    # Sanitize history to remove any non-serializable chars
+    safe_history = []
+    for msg in history:
+        safe_msg = {k: (v.encode('utf-8', errors='replace').decode('utf-8') if isinstance(v, str) else v)
+                    for k, v in msg.items()}
+        safe_history.append(safe_msg)
+    with open(path, 'w', encoding='utf-8', errors='replace') as f:
+        json.dump(
             {
                 "session_id": session_id,
                 "updated_at": datetime.now().isoformat(),
-                "history": history,
+                "history": safe_history,
             },
+            f,
             indent=2,
             ensure_ascii=False,
         )
-    )
 
 
 def load_session(session_id: str) -> list:
@@ -42,7 +48,8 @@ def load_session(session_id: str) -> list:
     path = MEMORY_DIR / f"{session_id}.json"
     if path.exists():
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            with open(path, 'r', encoding='utf-8', errors='replace') as f:
+                data = json.load(f)
             return data.get("history", [])
         except Exception:
             pass
