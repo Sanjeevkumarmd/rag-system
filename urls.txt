@@ -1,0 +1,2 @@
+# Example — add real sources you want it to learn from
+# One URL per line. Lines starting with # are ignored.

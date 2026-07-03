@@ -1,0 +1,3 @@
+https://en.wikipedia.org/wiki/Retrieval-augmented_generation
+https://en.wikipedia.org/wiki/Large_language_model
+https://en.wikipedia.org/wiki/Vector_database
