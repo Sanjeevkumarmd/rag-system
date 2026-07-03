@@ -813,7 +813,7 @@ from datetime import datetime
 for msg in st.session_state.chat_history:
     role = msg["role"]
     avatar = "🧑" if role == "user" else "⚡"
-    marker = '<div class="user-marker"></div>' if role == "user" else '<div class="assistant-marker"></div>'
+    marker = '<span class="user-marker" style="display:none;">user</span>' if role == "user" else '<span class="assistant-marker" style="display:none;">assistant</span>'
     timestamp = msg.get("timestamp", datetime.now().strftime("%I:%M %p"))
     safe_content = urllib.parse.quote(msg["content"])
     
@@ -917,7 +917,7 @@ if user_input:
     
     with st.chat_message("user", avatar="🧑"):
         st.markdown(
-            user_input + '<div class="user-marker"></div>' +
+            user_input + '<span class="user-marker" style="display:none;">user</span>' +
             f"""<div class="chat-actions">
               <span>{now_time}</span>
               <span style="margin: 0 2px;">·</span>
@@ -956,7 +956,7 @@ if user_input:
             st.image(image_url, use_column_width=True)
             
             full_response = f"🎨 Here is the image I generated for: **{img_prompt}**\n\n![Generated Image]({image_url})"
-            st.markdown('<div class="assistant-marker"></div>' +
+            st.markdown('<span class="assistant-marker" style="display:none;">assistant</span>' +
                         f"""<div class="chat-actions">
                           <span>{now_time}</span>
                           <span style="margin: 0 2px;">·</span>
@@ -979,7 +979,7 @@ if user_input:
                     typewriter_generator(pipeline.stream_general_answer(user_input, history_for_llm, ai_mode=mode))
                 )
                 
-            st.markdown('<div class="assistant-marker"></div>' +
+            st.markdown('<span class="assistant-marker" style="display:none;">assistant</span>' +
                         f"""<div class="chat-actions">
                           <span>{now_time}</span>
                           <span style="margin: 0 2px;">·</span>
